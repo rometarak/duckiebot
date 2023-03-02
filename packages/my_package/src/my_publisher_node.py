@@ -79,23 +79,23 @@ class MyPublisherNode(DTROS):
                 self.pub.publish(speed)
                 time.sleep(2)
                 break
-            else:
-                # Calculate the control signal
-                e = self.distance - 0.25
-                u = 0.1233 * e
-                # Calculate the velocities of the left and right wheels
-                vel_left = self.v0 - u
-                vel_right = self.v0 + u
-                # Convert the velocities to the appropriate units
-                vel_left = vel_left / self.L
-                vel_right = vel_right / self.L
-                # Store the velocities in the message
-                speed.vel_left = vel_left
-                speed.vel_right = vel_right
-                # Publish the velocities
-                self.pub.publish(speed)
-                # Sleep for a short time to control the loop rate
-                time.sleep(0.1)
+        else:
+            # Calculate the control signal
+            e = self.distance - 0.25
+            u = 0.1233 * e
+            # Calculate the velocities of the left and right wheels
+            vel_left = self.v0 - u
+            vel_right = self.v0 + u
+            # Convert the velocities to the appropriate units
+            vel_left = vel_left / self.L
+            vel_right = vel_right / self.L
+            # Store the velocities in the message
+            speed.vel_left = vel_left
+            speed.vel_right = vel_right
+            # Publish the velocities
+            self.pub.publish(speed)
+            # Sleep for a short time to control the loop rate
+            time.sleep(0.1)
 
     def pid_controller(self):
         bus = SMBus(1)
@@ -181,7 +181,7 @@ class MyPublisherNode(DTROS):
 
             #Kutsun välja kastist mööda minemise funktsiooni
             self.around_box()
-                    
+
             
             bus.close()
             self.pub.publish(speed)
