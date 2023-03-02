@@ -17,10 +17,8 @@ class MyPublisherNode(DTROS):
         self.right_encoder = 0.0
         self.delta_t = 1
         self.omega = 0
-        self.v0 = 0.5                                                   #Kiirus
-        self.L = 0.1                                                    #Distance between the center of the two wheels, expressed in meters
-
-
+        self.v0 = 0.5                                              #Kiirus
+        self.L = 0.1                                               #Distance between the center of the two wheels, expressed in meters
 
         # initialize the DTROS parent class
         super(MyPublisherNode, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
@@ -133,7 +131,6 @@ class MyPublisherNode(DTROS):
         self.omega = Kp*e + Ki*e_int + Kd*e_der                 #PID controller for omega
 
     def run(self):
-        #----------------------------------------------MUUTUJAD--------------------------------------------------------
         t0 = time.time()
 
         prev_tick_left = self.left_encoder
@@ -171,17 +168,15 @@ class MyPublisherNode(DTROS):
             d_A = (d_left + d_right)/2                          #d_A = Roboti läbitud tee
         
             Delta_Theta = (d_right-d_left)/self.L                    #Delta_Theta = Mitu kraadi robot keeranud on
-            #print(f"The robot has rotated: {np.rad2deg(Delta_Theta)} degrees")
-            #print("-------------------------------", self.left_encoder)
-            #print("-------------------------------", self.right_encoder)
+
+            #Kutsun välja pidcontrolleri funktsiooni
             self.pid_controller()
+
             speed.vel_left = self.v0 - self.omega
             speed.vel_right = self.v0 + self.omega
             
-
             #Kutsun välja kastist mööda minemise funktsiooni
             self.around_box()
-
             
             bus.close()
             self.pub.publish(speed)
@@ -189,7 +184,6 @@ class MyPublisherNode(DTROS):
 
             t1 = time.time()
             self.delta_t = t0 - t1
-            #prev_int = e_int
 
 if __name__ == '__main__':
     speed = WheelsCmdStamped()
