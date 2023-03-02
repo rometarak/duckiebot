@@ -17,6 +17,10 @@ class MyPublisherNode(DTROS):
         self.right_encoder = 0.0
         self.delta_t = 1
         self.omega = 0
+        self.v0 = 0.5                                                   #Kiirus
+        self.L = 0.1                                                    #Distance between the center of the two wheels, expressed in meters
+
+
 
         # initialize the DTROS parent class
         super(MyPublisherNode, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
@@ -46,6 +50,53 @@ class MyPublisherNode(DTROS):
     def led_pattern(self, data):
         self.led_pattern = data.header.seq
    
+    def around_box(self):
+        if self.distance < 0.25:
+            for i in range(2):
+                # Turn 90 degrees right in 2 second
+                speed.vel_right = 0.0
+                speed.vel_left = 0.3
+                self.pub.publish(speed)
+                time.sleep(2)
+                # Go straight for 0.15 meters
+                speed.vel_right = 0.3
+                speed.vel_left = 0.3
+                self.pub.publish(speed)
+                time.sleep(2)
+                # Turn 90 degrees left in 2 second
+                speed.vel_right = 0.3
+                speed.vel_left = 0.0
+                self.pub.publish(speed)
+                time.sleep(2)
+                # Go straight for 0.15 meters
+                speed.vel_right = 0.3
+                speed.vel_left = 0.3
+                self.pub.publish(speed)
+                time.sleep(2)
+                # Turn 90 degrees left in 2 second
+                speed.vel_right = 0.0
+                speed.vel_left = 0.3
+                self.pub.publish(speed)
+                time.sleep(2)
+                break
+            else:
+                # Calculate the control signal
+                e = self.distance - 0.25
+                u = 0.1233 * e
+                # Calculate the velocities of the left and right wheels
+                vel_left = self.v0 - u
+                vel_right = self.v0 + u
+                # Convert the velocities to the appropriate units
+                vel_left = vel_left / self.L
+                vel_right = vel_right / self.L
+                # Store the velocities in the message
+                speed.vel_left = vel_left
+                speed.vel_right = vel_right
+                # Publish the velocities
+                self.pub.publish(speed)
+                # Sleep for a short time to control the loop rate
+                time.sleep(0.1)
+
     def pid_controller(self):
         bus = SMBus(1)
         read = bin(bus.read_byte_data(62, 17))[2:].zfill(8)
@@ -80,12 +131,9 @@ class MyPublisherNode(DTROS):
         Kd = 10
 
         self.omega = Kp*e + Ki*e_int + Kd*e_der                 #PID controller for omega
-        print(line_values)
+
     def run(self):
         #----------------------------------------------MUUTUJAD--------------------------------------------------------
-        v0 = 0.5                                                #Kiirus
-        L = 0.1                                                 #Distance between the center of the two wheels, expressed in meters
-        #delta_t = 1
         t0 = time.time()
 
         prev_tick_left = self.left_encoder
@@ -122,66 +170,18 @@ class MyPublisherNode(DTROS):
          
             d_A = (d_left + d_right)/2                          #d_A = Roboti läbitud tee
         
-            Delta_Theta = (d_right-d_left)/L                    #Delta_Theta = Mitu kraadi robot keeranud on
+            Delta_Theta = (d_right-d_left)/self.L                    #Delta_Theta = Mitu kraadi robot keeranud on
             #print(f"The robot has rotated: {np.rad2deg(Delta_Theta)} degrees")
             #print("-------------------------------", self.left_encoder)
             #print("-------------------------------", self.right_encoder)
             self.pid_controller()
-            speed.vel_left = v0 - self.omega
-            speed.vel_right = v0 + self.omega
+            speed.vel_left = self.v0 - self.omega
+            speed.vel_right = self.v0 + self.omega
             
 
-            #----------------------------------------------KASTIST MÖÖDA MINEMINE--------------------------------------------------------
-            """ if self.distance < 0.25:
-                speed.vel_right = 0.0
-                speed.vel_left = 0.3
-            elif self.distance > 25 and abs(speed.vel_right - 0.3) < 0.01 and abs(speed.vel_left - 0) < 0.01:
-                speed.vel_right = 0.3
-                speed.vel_right = 0 """
-
-                
-
-            """ total_distance = d_A + 0.60
-            target_distance = 0
-            target_distance1 = 0
-            target_distance2 = 0
-            if self.distance < 0.25: # tof sensoriga 15 cm objektist peatub
-                while self.distance < total_distance:
-                    # 90 kraadi paremale
-                    speed.vel_right = 0.0
-                    speed.vel_left = 0.3
-                    rospy.sleep(0.5)
-                    # 15 cm otse
-                    speed.vel_right = 0.3
-                    speed.vel_left = 0
-                    total_distance = d_A + 0.60
-                    target_distance = d_A + 0.15
-                    if d_A < target_distance:
-                        omega = 0.0
-                        v0 = 0.1
-                    # 90 kraadi vasakule
-                    elif d_A > target_distance:
-                        speed.vel_right = 0.3
-                        speed.vel_left = 0
-                        rospy.sleep(1)
-                        target_distance1 = d_A + 0.15
-                        if d_A < target_distance1:
-                            omega = 0.0
-                            v0 = 0.1
-                        elif d_A > target_distance1:
-                            speed.vel_right = 0.3
-                            speed.vel_left = 0
-                            rospy.sleep(1)
-                            target_distance2 = d_A + 0.15
-                            if d_A < target_distance2:
-                                omega = 0.0
-                                v0 = 0.1
-                            elif d_A > target_distance2:
-                                speed.vel_right = 0
-                                speed.vel_left = 0.3
-                                rospy.sleep(1)
-                                break """     
-                
+            #Kutsun välja kastist mööda minemise funktsiooni
+            self.around_box()
+                    
             
             bus.close()
             self.pub.publish(speed)
