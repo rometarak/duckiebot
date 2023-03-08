@@ -9,16 +9,16 @@ from smbus2 import SMBus
 import time
 from duckietown_msgs.msg import WheelsCmdStamped, WheelEncoderStamped, LEDPattern
 from sensor_msgs.msg import Range
+import pidcontroller
 
 class MyPublisherNode(DTROS):
     def __init__(self, node_name):
-        self.distance = 0.0
+        self.distance = 8
         self.left_encoder = 0.0
         self.right_encoder = 0.0
-        self.delta_t = 1
-        self.omega = 0
-        self.v0 = 0.5                                              #Kiirus
-        self.L = 0.1                                               #Distance between the center of the two wheels, expressed in meters
+        
+        self.v0 = 0.4                                           #Kiirus
+        self.L = 0.1                                            #Distance between the center of the two wheels, expressed in meters
 
         # initialize the DTROS parent class
         super(MyPublisherNode, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
@@ -49,86 +49,31 @@ class MyPublisherNode(DTROS):
         self.led_pattern = data.header.seq
    
     def around_box(self):
-        if self.distance < 0.25:
-            for i in range(2):
-                # Turn 90 degrees right in 2 second
-                speed.vel_right = 0.0
-                speed.vel_left = 0.3
-                self.pub.publish(speed)
-                time.sleep(2)
-                # Go straight for 0.15 meters
-                speed.vel_right = 0.3
-                speed.vel_left = 0.3
-                self.pub.publish(speed)
-                time.sleep(2)
-                # Turn 90 degrees left in 2 second
-                speed.vel_right = 0.3
-                speed.vel_left = 0.0
-                self.pub.publish(speed)
-                time.sleep(2)
-                # Go straight for 0.15 meters
-                speed.vel_right = 0.3
-                speed.vel_left = 0.3
-                self.pub.publish(speed)
-                time.sleep(2)
-                # Turn 90 degrees left in 2 second
-                speed.vel_right = 0.0
-                speed.vel_left = 0.3
-                self.pub.publish(speed)
-                time.sleep(2)
-                break
-        else:
-            # Calculate the control signal
-            e = self.distance - 0.25
-            u = 0.1233 * e
-            # Calculate the velocities of the left and right wheels
-            vel_left = self.v0 - u
-            vel_right = self.v0 + u
-            # Convert the velocities to the appropriate units
-            vel_left = vel_left / self.L
-            vel_right = vel_right / self.L
-            # Store the velocities in the message
-            speed.vel_left = vel_left
-            speed.vel_right = vel_right
-            # Publish the velocities
-            self.pub.publish(speed)
-            # Sleep for a short time to control the loop rate
-            time.sleep(0.1)
-
-    def pid_controller(self):
-        bus = SMBus(1)
-        read = bin(bus.read_byte_data(62, 17))[2:].zfill(8)
-        
-        #arvutab theta refi keskpunkti välja(otse on 4.5)
-        line_values = []
-        for i, value in enumerate(read):
-            if value =='1':
-                line_values.append(i + 1)
-        if len(line_values) >= 1:
-            theta_hat = sum(line_values)/len(line_values)
-        if len(line_values) == 0:
-            theta_hat = 4
-
-        pose_estimation = 4.5
-        prev_int = 0
- 
-        e = pose_estimation - theta_hat 
-        e_int = prev_int + e*self.delta_t
-        prev_int = e_int                                        #integral of the error
-        prev_e = e                                              #Tracking
-        e_int = max(min(e_int,2),-2)                            # anti-windup - preventing the integral error from growing too much       
-        e_der = (e - prev_e)/self.delta_t                       #derivative of the error
-        
-
-        # controller coefficients
-        #Kp = rospy.get_param("/p")
-        #Ki = rospy.get_param("/i")
-        #Kd = rospy.get_param("/d")
-        Kp = 0.1233
-        Ki = 0.022
-        Kd = 10
-
-        self.omega = Kp*e + Ki*e_int + Kd*e_der                 #PID controller for omega
+        # Turn 90 degrees right in 2 second
+        speed.vel_right = 0.0
+        speed.vel_left = 0.3
+        self.pub.publish(speed)
+        time.sleep(1)
+        # Go straight for 0.15 meters
+        speed.vel_right = 0.3
+        speed.vel_left = 0.3
+        self.pub.publish(speed)
+        time.sleep(2)
+        # Turn 90 degrees left in 2 second
+        speed.vel_right = 0.3
+        speed.vel_left = 0.0
+        self.pub.publish(speed)
+        time.sleep(1)
+        # Go straight for 0.15 meters
+        speed.vel_right = 0.3
+        speed.vel_left = 0.3
+        self.pub.publish(speed)
+        time.sleep(2)
+        # Turn 90 degrees left in 2 second
+        speed.vel_right = 0.0
+        speed.vel_left = 0.3
+        self.pub.publish(speed)
+        time.sleep(1)
 
     def run(self):
         t0 = time.time()
@@ -167,17 +112,16 @@ class MyPublisherNode(DTROS):
          
             d_A = (d_left + d_right)/2                          #d_A = Roboti läbitud tee
         
-            Delta_Theta = (d_right-d_left)/self.L                    #Delta_Theta = Mitu kraadi robot keeranud on
-
-            #Kutsun välja pidcontrolleri funktsiooni
-            self.pid_controller()
-
-            speed.vel_left = self.v0 - self.omega
-            speed.vel_right = self.v0 + self.omega
+            Delta_Theta = (d_right-d_left)/self.L               #Delta_Theta = Mitu kraadi robot keeranud on
+            
+            speed.vel_left = self.v0 - pidcontroller.pid_controller()
+            speed.vel_right = self.v0 + pidcontroller.pid_controller()
             
             #Kutsun välja kastist mööda minemise funktsiooni
-            self.around_box()
-            
+            if self.distance < 0.25:
+                self.around_box()
+
+            print(self.distance)
             bus.close()
             self.pub.publish(speed)
             rate.sleep()
