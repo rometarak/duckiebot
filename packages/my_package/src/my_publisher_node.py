@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import around_the_box
 import os
 import numpy as np
 import rospy
@@ -16,7 +17,6 @@ class MyPublisherNode(DTROS):
         self.distance = 8
         self.left_encoder = 0.0
         self.right_encoder = 0.0
-        
         self.v0 = 0.4                                           #Kiirus
         self.L = 0.1                                            #Distance between the center of the two wheels, expressed in meters
 
@@ -47,33 +47,6 @@ class MyPublisherNode(DTROS):
 
     def led_pattern(self, data):
         self.led_pattern = data.header.seq
-   
-    def around_box(self):
-        # Turn 90 degrees right in 2 second
-        speed.vel_right = 0.0
-        speed.vel_left = 0.3
-        self.pub.publish(speed)
-        time.sleep(1)
-        # Go straight for 0.15 meters
-        speed.vel_right = 0.3
-        speed.vel_left = 0.3
-        self.pub.publish(speed)
-        time.sleep(2)
-        # Turn 90 degrees left in 2 second
-        speed.vel_right = 0.3
-        speed.vel_left = 0.0
-        self.pub.publish(speed)
-        time.sleep(1)
-        # Go straight for 0.15 meters
-        speed.vel_right = 0.3
-        speed.vel_left = 0.3
-        self.pub.publish(speed)
-        time.sleep(2)
-        # Turn 90 degrees left in 2 second
-        speed.vel_right = 0.0
-        speed.vel_left = 0.3
-        self.pub.publish(speed)
-        time.sleep(1)
 
     def run(self):
         t0 = time.time()
@@ -114,12 +87,13 @@ class MyPublisherNode(DTROS):
         
             Delta_Theta = (d_right-d_left)/self.L               #Delta_Theta = Mitu kraadi robot keeranud on
             
+            #pidcontroller.pidcontroller() returnib omega
             speed.vel_left = self.v0 - pidcontroller.pid_controller()
             speed.vel_right = self.v0 + pidcontroller.pid_controller()
             
-            #Kutsun välja kastist mööda minemise funktsiooni
             if self.distance < 0.25:
-                self.around_box()
+                #Kutsun välja kastist mööda minemise funktsiooni
+                around_the_box.around_box()
 
             print(self.distance)
             bus.close()
