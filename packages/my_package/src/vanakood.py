@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import numpy as np
 import rospy
@@ -13,21 +11,7 @@ from sensor_msgs.msg import Range
 class MyPublisherNode(DTROS):
     def __init__(self, node_name):
         self.distance = 0.0
-
-        self.time_left = 0
-        self.time_right = 0
-
-        self.left_encoder = 0.0
-        self.right_encoder = 0.0
-
-        self.ticks_left = 0
-        self.ticks_right = 0
-
-        self.prev_tick_left = 0
-        self.prev_tick_right = 0
-
-        self.rotation_wheel_left = 0
-        self.rotation_wheel_right = 0
+ion_wheel_right = 0
 
         self.delta_ticks_left = 0
         self.delta_ticks_right = 0
@@ -78,7 +62,35 @@ class MyPublisherNode(DTROS):
     def callback_right_encoder(self, data):
         self.right_encoder = data.data
     def time_left(self, data):
-        self.time_left = data.header.seq
+        self.time_left = data.header.sreturns:
+        v_0 (:double:) linear velocity of the Duckiebot 
+        omega (:double:) angular velocity of the Duckiebot
+        e (:double:) current tracking error (automatically becomes prev_e_y at next iteration).
+        e_int (:double:) current integral error (automatically becomes prev_int_y at next iteration).
+    """
+    
+    # Tracking error
+    e = theta_ref - theta_hat
+
+    # integral of the error
+    e_int = prev_int + e*delta_t
+
+    # anti-windup - preventing the integral error from growing too much
+    e_int = max(min(e_int,2),-2)
+
+    # derivative of the error
+    e_der = (e - prev_e)/delta_t
+
+    # controller coefficients
+    Kp = 5
+    Ki = 0.2
+    Kd = 0.1
+
+    # PID controller for omega
+    omega = Kp*e + Ki*e_int + Kd*e_der
+    
+    #print(f"\n\nDelta time : {delta_t} \nE : {np.rad2deg(e)} \nE int : {e_int} \nPrev e : {prev_e} \nU : {u} \nTheta hat: {np.rad2deg(theta_hat)} \n")
+    eq
     def time_right(self, data):
         self.time_right = data.header.seq
     def led_pattern(self, data):

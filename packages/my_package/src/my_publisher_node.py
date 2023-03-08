@@ -86,7 +86,7 @@ class MyPublisherNode(DTROS):
             d_A = (d_left + d_right)/2                          #d_A = Roboti läbitud tee
         
             Delta_Theta = (d_right-d_left)/self.L               #Delta_Theta = Mitu kraadi robot keeranud on
-            
+          
             #pidcontroller.pidcontroller() returnib omega
             speed.vel_left = self.v0 - pidcontroller.pid_controller()
             speed.vel_right = self.v0 + pidcontroller.pid_controller()
