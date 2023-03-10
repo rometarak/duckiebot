@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import around_the_box
 import os
 import numpy as np
@@ -26,7 +25,6 @@ class MyPublisherNode(DTROS):
         rospy.Subscriber('/bestduckbot/front_center_tof_driver_node/range', Range, self.callback)
         rospy.Subscriber('/bestduckbot/left_wheel_encoder_node/tick', WheelEncoderStamped, self.callback_left_encoder)
         rospy.Subscriber('/bestduckbot/right_wheel_encoder_node/tick', WheelEncoderStamped, self.callback_right_encoder)
-        rospy.Subscriber('/bestduckbot/led_emitter_node/led_pattern', LEDPattern, self.led_pattern)
 
     def on_shutdown(self):
         rospy.on_shutdown(self.shutdown)
@@ -44,9 +42,6 @@ class MyPublisherNode(DTROS):
         
     def callback_right_encoder(self, data):
         self.right_encoder = data.data
-
-    def led_pattern(self, data):
-        self.led_pattern = data.header.seq
 
     def run(self):
         t0 = time.time()
@@ -73,9 +68,6 @@ class MyPublisherNode(DTROS):
             ticks_right = self.right_encoder
             ticks_left = self.left_encoder
 
-            delta_ticks_left = ticks_left-prev_tick_left        # delta ticks of left wheel
-            delta_ticks_right = ticks_right-prev_tick_right     # delta ticks of right wheel
-
             rotation_wheel_left = alpha * delta_ticks_left      #rotation_wheel_left = vasak ratas on kokku rotateerunud
             rotation_wheel_right = alpha * delta_ticks_right    #rotation_wheel_right = parem ratas on kokku rotateerunud
 
@@ -86,7 +78,7 @@ class MyPublisherNode(DTROS):
             d_A = (d_left + d_right)/2                          #d_A = Roboti läbitud tee
         
             Delta_Theta = (d_right-d_left)/self.L               #Delta_Theta = Mitu kraadi robot keeranud on
-          
+            
             #pidcontroller.pidcontroller() returnib omega
             speed.vel_left = self.v0 - pidcontroller.pid_controller()
             speed.vel_right = self.v0 + pidcontroller.pid_controller()
