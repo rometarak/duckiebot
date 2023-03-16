@@ -10,7 +10,7 @@ class MySubscriberNode(DTROS):
         # initialize the DTROS parent class
         super(MySubscriberNode, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
         # construct publisher
-        self.sub = rospy.Subscriber('messageTopic', String, self.callback)
+        
 
     def callback(self, data):
         rospy.loginfo("ignore me plez %s", data.data)

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
+
+# -----------------IMPORTED FILES---------------------
+#import odometry
+import pidcontroller
 import around_the_box
+from sensor_msgs.msg import Temperature, Imu
 import os
 import numpy as np
 import rospy
@@ -7,12 +12,13 @@ from duckietown.dtros import DTROS, NodeType
 from std_msgs.msg import String
 from smbus2 import SMBus
 import time
-from duckietown_msgs.msg import WheelsCmdStamped, WheelEncoderStamped, LEDPattern
+from duckietown_msgs.msg import WheelsCmdStamped, WheelEncoderStamped
 from sensor_msgs.msg import Range
-import pidcontroller
+
 
 class MyPublisherNode(DTROS):
     def __init__(self, node_name):
+        self.imu = 0.0
         self.distance = 8
         self.left_encoder = 0.0
         self.right_encoder = 0.0
@@ -25,6 +31,7 @@ class MyPublisherNode(DTROS):
         rospy.Subscriber('/bestduckbot/front_center_tof_driver_node/range', Range, self.callback)
         rospy.Subscriber('/bestduckbot/left_wheel_encoder_node/tick', WheelEncoderStamped, self.callback_left_encoder)
         rospy.Subscriber('/bestduckbot/right_wheel_encoder_node/tick', WheelEncoderStamped, self.callback_right_encoder)
+        rospy.Subscriber('/imu/data', Imu, self.imu_data)
 
     def on_shutdown(self):
         rospy.on_shutdown(self.shutdown)
@@ -34,6 +41,9 @@ class MyPublisherNode(DTROS):
         speed.vel_right = 0
         self.pub.publish(speed)
 
+    def imu_data(data, self):
+        self.imu = data.angular_velocity.x
+    
     def callback(self, data):
         self.distance = data.range
 
@@ -88,6 +98,7 @@ class MyPublisherNode(DTROS):
                 around_the_box.around_box()
 
             print(self.distance)
+            print(self.imu)
             bus.close()
             self.pub.publish(speed)
             rate.sleep()

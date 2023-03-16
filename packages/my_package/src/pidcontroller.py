@@ -15,8 +15,7 @@ def pid_controller():
             theta_hat = sum(line_values)/len(line_values)
         if len(line_values) == 0:
             theta_hat = 4
-        
-        print(line_values)
+    
 
         pose_estimation = 4.5
         prev_int = 0

@@ -15,7 +15,7 @@ dt-launchfile-init
 # launching app
 dt-exec rosrun my_package my_publisher_node.py
 dt-exec rosrun my_package my_subscriber_node.py
-#dt-exec rosrun my_package lane_follower.py
+dt-exec rosrun mpu_6050_driver imu_publisher.py
 
 # ----------------------------------------------------------------------------
 # YOUR CODE ABOVE THIS LINE
