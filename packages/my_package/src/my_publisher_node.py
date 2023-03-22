@@ -2,14 +2,14 @@
 
 # -----------------IMPORTED FILES---------------------
 #import odometry
+import change_lane
 import pidcontroller
 import around_the_box
-from sensor_msgs.msg import Temperature, Imu
+from sensor_msgs.msg import Imu
 import os
 import numpy as np
 import rospy
 from duckietown.dtros import DTROS, NodeType
-from std_msgs.msg import String
 from smbus2 import SMBus
 import time
 from duckietown_msgs.msg import WheelsCmdStamped, WheelEncoderStamped
@@ -18,11 +18,11 @@ from sensor_msgs.msg import Range
 
 class MyPublisherNode(DTROS):
     def __init__(self, node_name):
-        self.imu = 0.0
+        self.linear_acceleration = 0.0
         self.distance = 8
         self.left_encoder = 0.0
         self.right_encoder = 0.0
-        self.v0 = 0.4                                           #Kiirus
+        self.v0 = 0.2                                           #Kiirus
         self.L = 0.1                                            #Distance between the center of the two wheels, expressed in meters
 
         # initialize the DTROS parent class
@@ -31,7 +31,7 @@ class MyPublisherNode(DTROS):
         rospy.Subscriber('/bestduckbot/front_center_tof_driver_node/range', Range, self.callback)
         rospy.Subscriber('/bestduckbot/left_wheel_encoder_node/tick', WheelEncoderStamped, self.callback_left_encoder)
         rospy.Subscriber('/bestduckbot/right_wheel_encoder_node/tick', WheelEncoderStamped, self.callback_right_encoder)
-        rospy.Subscriber('/imu/data', Imu, self.imu_data)
+        rospy.Subscriber('/bestduckbot/imu_node/imu_data', Imu, self.imu_data)
 
     def on_shutdown(self):
         rospy.on_shutdown(self.shutdown)
@@ -41,8 +41,8 @@ class MyPublisherNode(DTROS):
         speed.vel_right = 0
         self.pub.publish(speed)
 
-    def imu_data(data, self):
-        self.imu = data.angular_velocity.x
+    def imu_data(self, data):
+        self.linear_acceleration = data.linear_acceleration.x
     
     def callback(self, data):
         self.distance = data.range
@@ -59,7 +59,7 @@ class MyPublisherNode(DTROS):
         prev_tick_left = self.left_encoder
         prev_tick_right = self.right_encoder
     
-        rate = rospy.Rate(20) # 20Hz
+        rate = rospy.Rate(25) # 20Hz
         while not rospy.is_shutdown():
             bus = SMBus(1)
             #----------------------------------------------ODOMEETRIA--------------------------------------------------------
@@ -95,10 +95,16 @@ class MyPublisherNode(DTROS):
             
             if self.distance < 0.25:
                 #Kutsun välja kastist mööda minemise funktsiooni
-                around_the_box.around_box()
+                #around_the_box.around_box()
+                speed.vel_left = 0
+                speed.vel_right = 0
 
-            print(self.distance)
-            print(self.imu)
+            #Lühema raja valimine
+            change_lane.change_lane()
+
+            print(pidcontroller.pid_controller())
+            #print(self.distance)
+            #print("Linear Acceleration X: ", self.linear_acceleration)
             bus.close()
             self.pub.publish(speed)
             rate.sleep()
