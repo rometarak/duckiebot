@@ -4,6 +4,6 @@ polling_hz: 30
 sensor_name: bottom_center
 
 # Calibrations
-ang_vel_offset: [ 0, 0, 0 ]
-accel_offset: [ 0, 0, 0 ]
+ang_vel_offset: [ -0.008677475990120996, 0.029824168417761057, -0.02630476291961827 ]
+accel_offset: [ 0.12222638895263732, -0.23007320273437273, 8.929716181127912 ]
 temp_offset: 0

@@ -24,6 +24,7 @@ class IMUNode(DTROS):
         self._temp_offset = rospy.get_param("~temp_offset")
         self._gyro_offset = rospy.get_param("~ang_vel_offset")
         self._accel_offset = rospy.get_param("~accel_offset")
+        self.check_if_true = False
         self.loginfo("===============IMU Node Init Val===============")
         self.loginfo(f"Op Rate: {polling_hz}")
         self.loginfo(f"ADDR: {self._imu_device_id}")
@@ -61,6 +62,7 @@ class IMUNode(DTROS):
             acc_data = self._imu.acceleration
             gyro_data = self._imu.gyro
             temp_data = self._imu.temperature
+            test_var = self.check_if_true = False
             # Do it together so that the timestamp is honored
 
             # Populate Message

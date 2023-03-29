@@ -2,10 +2,10 @@
 
 # -----------------IMPORTED FILES---------------------
 #import odometry
-import change_lane
+import imu_calibration
+#import change_lane
 import pidcontroller
-import around_the_box
-from sensor_msgs.msg import Imu
+#import around_the_box
 import os
 import numpy as np
 import rospy
@@ -14,16 +14,17 @@ from smbus2 import SMBus
 import time
 from duckietown_msgs.msg import WheelsCmdStamped, WheelEncoderStamped
 from sensor_msgs.msg import Range
+import sys
 
 
 class MyPublisherNode(DTROS):
     def __init__(self, node_name):
-        self.linear_acceleration = 0.0
         self.distance = 8
         self.left_encoder = 0.0
         self.right_encoder = 0.0
-        self.v0 = 0.2                                           #Kiirus
+        self.v0 = 0                                           #Kiirus
         self.L = 0.1                                            #Distance between the center of the two wheels, expressed in meters
+        self.flag = 0
 
         # initialize the DTROS parent class
         super(MyPublisherNode, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
@@ -31,7 +32,6 @@ class MyPublisherNode(DTROS):
         rospy.Subscriber('/bestduckbot/front_center_tof_driver_node/range', Range, self.callback)
         rospy.Subscriber('/bestduckbot/left_wheel_encoder_node/tick', WheelEncoderStamped, self.callback_left_encoder)
         rospy.Subscriber('/bestduckbot/right_wheel_encoder_node/tick', WheelEncoderStamped, self.callback_right_encoder)
-        rospy.Subscriber('/bestduckbot/imu_node/imu_data', Imu, self.imu_data)
 
     def on_shutdown(self):
         rospy.on_shutdown(self.shutdown)
@@ -40,9 +40,6 @@ class MyPublisherNode(DTROS):
         speed.vel_left = 0
         speed.vel_right = 0
         self.pub.publish(speed)
-
-    def imu_data(self, data):
-        self.linear_acceleration = data.linear_acceleration.x
     
     def callback(self, data):
         self.distance = data.range
@@ -52,7 +49,7 @@ class MyPublisherNode(DTROS):
         
     def callback_right_encoder(self, data):
         self.right_encoder = data.data
-
+    
     def run(self):
         t0 = time.time()
 
@@ -90,7 +87,7 @@ class MyPublisherNode(DTROS):
             Delta_Theta = (d_right-d_left)/self.L               #Delta_Theta = Mitu kraadi robot keeranud on
             
             #pidcontroller.pidcontroller() returnib omega
-            speed.vel_left = self.v0 - pidcontroller.pid_controller()
+            #speed.vel_left = self.v0 - pidcontroller.pid_controller()
             speed.vel_right = self.v0 + pidcontroller.pid_controller()
             
             if self.distance < 0.25:
@@ -100,17 +97,13 @@ class MyPublisherNode(DTROS):
                 speed.vel_right = 0
 
             #Lühema raja valimine
-            change_lane.change_lane()
+            #change_lane.change_lane()
 
-            print(pidcontroller.pid_controller())
-            #print(self.distance)
-            #print("Linear Acceleration X: ", self.linear_acceleration)
             bus.close()
             self.pub.publish(speed)
             rate.sleep()
 
             t1 = time.time()
-            self.delta_t = t0 - t1
 
 if __name__ == '__main__':
     speed = WheelsCmdStamped()
@@ -118,6 +111,7 @@ if __name__ == '__main__':
     theta0 = 0 # radians
     # create the node
     node = MyPublisherNode(node_name='my_publisher_node')
+    
     # run node
     node.run()
     # keep spinning

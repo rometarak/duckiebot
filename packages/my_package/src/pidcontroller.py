@@ -29,12 +29,12 @@ def pid_controller():
         
 
         # controller coefficients
-        Kp = rospy.get_param("/p")
-        Ki = rospy.get_param("/i")
-        Kd = rospy.get_param("/d")
-        #Kp = 0.1233
-        #Ki = 0.022
-        #Kd = 10
+        #Kp = rospy.get_param("/p")
+        #Ki = rospy.get_param("/i")
+        #Kd = rospy.get_param("/d")
+        Kp = 0.1233
+        Ki = 0.022
+        Kd = 10
 
         omega = Kp*e + Ki*e_int + Kd*e_der                 #PID controller for omega
         return omega
