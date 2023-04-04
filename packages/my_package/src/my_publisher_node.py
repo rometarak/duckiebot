@@ -3,9 +3,9 @@
 # -----------------IMPORTED FILES---------------------
 #import odometry
 import imu_calibration
-#import change_lane
+import change_lane
 import pidcontroller
-#import around_the_box
+import around_the_box
 import os
 import numpy as np
 import rospy
@@ -87,14 +87,12 @@ class MyPublisherNode(DTROS):
             Delta_Theta = (d_right-d_left)/self.L               #Delta_Theta = Mitu kraadi robot keeranud on
             
             #pidcontroller.pidcontroller() returnib omega
-            #speed.vel_left = self.v0 - pidcontroller.pid_controller()
+            speed.vel_left = self.v0 - pidcontroller.pid_controller()
             speed.vel_right = self.v0 + pidcontroller.pid_controller()
             
             if self.distance < 0.25:
                 #Kutsun välja kastist mööda minemise funktsiooni
-                #around_the_box.around_box()
-                speed.vel_left = 0
-                speed.vel_right = 0
+                around_the_box.around_box()
 
             #Lühema raja valimine
             #change_lane.change_lane()
