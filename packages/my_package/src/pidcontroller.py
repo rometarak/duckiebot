@@ -1,8 +1,10 @@
 from smbus2 import SMBus
 import rospy
-delta_t = 1
+import time
 
-def pid_controller():
+
+def pid_controller(t0,t1):
+        delta_t = 1
         bus = SMBus(1)
         read = bin(bus.read_byte_data(62, 17))[2:].zfill(8)
         
@@ -15,26 +17,26 @@ def pid_controller():
             theta_hat = sum(line_values)/len(line_values)
         if len(line_values) == 0:
             theta_hat = 4
-    
+
 
         pose_estimation = 4.5
         prev_int = 0
  
-        e = pose_estimation - theta_hat 
+        e = pose_estimation - theta_hat
         e_int = prev_int + e*delta_t
         prev_int = e_int                                        #integral of the error
         prev_e = e                                              #Tracking
         e_int = max(min(e_int,2),-2)                            # anti-windup - preventing the integral error from growing too much       
-        e_der = (e - prev_e)/delta_t                       #derivative of the error
-        
+        e_der = (e - prev_e)/delta_t                            #derivative of the error
 
         # controller coefficients
-        #Kp = rospy.get_param("/p")
-        #Ki = rospy.get_param("/i")
-        #Kd = rospy.get_param("/d")
-        Kp = 0.1233
-        Ki = 0.022
-        Kd = 10
-
+        Kp = rospy.get_param("/p")          #rosparam set /p 0
+        Ki = rospy.get_param("/i")          #rosparam set /i 0
+        Kd = rospy.get_param("/d")          #rosparam set /d 0
+        #Kp = 0.050
+        #Ki = 0.02 
+        #Kd = 1.2
+        
+        delta_t = t0-t1
         omega = Kp*e + Ki*e_int + Kd*e_der                 #PID controller for omega
         return omega
