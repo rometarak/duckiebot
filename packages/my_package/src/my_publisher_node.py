@@ -2,8 +2,8 @@
 
 # -----------------IMPORTED FILES---------------------
 #import odometry
-import imu_calibration
-import change_lane
+#import imu_calibration
+#import change_lane
 import pidcontroller
 import around_the_box
 import os
@@ -16,16 +16,16 @@ from duckietown_msgs.msg import WheelsCmdStamped, WheelEncoderStamped
 from sensor_msgs.msg import Range
 import sys
 
-
 class MyPublisherNode(DTROS):
     def __init__(self, node_name):
         self.distance = 8
         self.left_encoder = 0.0
         self.right_encoder = 0.0
-        self.v0 = 0                                           #Kiirus
+        self.v0 = 0.3                                           #Kiirus
         self.L = 0.1                                            #Distance between the center of the two wheels, expressed in meters
         self.flag = 0
-
+        self.turn_left = [[1,2,3,4],[1,2,3,4,5],[1,2,3,4,5,6]]
+        self.turn_right = [[5,6,7,8],[4,5,6,7,8],[3,4,5,6,7,8]]
         # initialize the DTROS parent class
         super(MyPublisherNode, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
         self.pub = rospy.Publisher('bestduckbot/wheels_driver_node/wheels_cmd', WheelsCmdStamped, queue_size=10)
@@ -85,10 +85,33 @@ class MyPublisherNode(DTROS):
             d_A = (d_left + d_right)/2                          #d_A = Roboti läbitud tee
         
             Delta_Theta = (d_right-d_left)/self.L               #Delta_Theta = Mitu kraadi robot keeranud on
+
+            #90 kraadiste nurkade pööramise loogika
+            flag = 0
+            if pidcontroller.get_line_values() in self.turn_right:
+                speed.vel_left = 0.3
+                speed.vel_right = 0
+                self.pub.publish(speed)
+                flag = 1
+            if pidcontroller.get_line_values() in self.turn_left:
+                speed.vel_left = 0
+                speed.vel_right = 0.3
+                self.pub.publish(speed)
+                flag = 0
             
+            if pidcontroller.get_line_values() == [] and flag == 1:
+                speed.vel_left = 0.3
+                speed.vel_right = 0
+                self.pub.publish(speed)
+            if pidcontroller.get_line_values() == [] and flag == 0:
+                speed.vel_left = 0
+                speed.vel_right = 0.3
+                self.pub.publish(speed)
+            
+            t1 = time.time()
             #pidcontroller.pidcontroller() returnib omega
-            speed.vel_left = self.v0 - pidcontroller.pid_controller()
-            speed.vel_right = self.v0 + pidcontroller.pid_controller()
+            speed.vel_left = self.v0 - pidcontroller.pid_controller(t0,t1)
+            speed.vel_right = self.v0 + pidcontroller.pid_controller(t0,t1)
             
             if self.distance < 0.25:
                 #Kutsun välja kastist mööda minemise funktsiooni
@@ -96,12 +119,12 @@ class MyPublisherNode(DTROS):
 
             #Lühema raja valimine
             #change_lane.change_lane()
-
+            print(pidcontroller.get_line_values())
             bus.close()
             self.pub.publish(speed)
             rate.sleep()
 
-            t1 = time.time()
+            
 
 if __name__ == '__main__':
     speed = WheelsCmdStamped()
@@ -109,7 +132,6 @@ if __name__ == '__main__':
     theta0 = 0 # radians
     # create the node
     node = MyPublisherNode(node_name='my_publisher_node')
-    
     # run node
     node.run()
     # keep spinning
