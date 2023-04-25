@@ -25,6 +25,8 @@ class ImuCalibration(DTROS):
         self.linear_acceleration_y = 0.0
         self.linear_acceleration_z = 0.0
         self.i = 0
+        self.current_time = time.time()
+        self.last_time = 0
         
         super(ImuCalibration, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
         rospy.Subscriber('/bestduckbot/imu_node/imu_data', Imu, self.imu_data)
@@ -36,6 +38,7 @@ class ImuCalibration(DTROS):
         self.linear_acceleration_x = data.linear_acceleration.x
         self.linear_acceleration_y = data.linear_acceleration.y
         self.linear_acceleration_z = data.linear_acceleration.z
+        self.current_time = time.time()
         
         while self.i<=1000:
             self.i+=1
@@ -50,13 +53,14 @@ class ImuCalibration(DTROS):
     def run(self):
         pub = rospy.Publisher('odom', Odometry, queue_size=10)
         odom_broadcaster = tf.TransformBroadcaster()
-        start_time = rospy.Time.now()
-        current_time = rospy.Time.now()
-        last_time = rospy.Time.now()
+        vx = 0.0
         x = 0.0
+        distance = 0.0
         y = 0.0
         th = 0.0
+        last_speed = 0.0
         rate = rospy.Rate(10) # 10hz
+
         while not rospy.is_shutdown():
             #print("---------------------------------------------------")
             #print("angular x keskmine on: ", self.angular_x/1000)
@@ -69,33 +73,34 @@ class ImuCalibration(DTROS):
             gyro_yout = self.angular_y #EI KASUTA
             gyro_zout = self.angular_z
 
-            acc_xout = self.linear_x
-            acc_yout = self.linear_y
+            acc_x = self.linear_acceleration_x
+            acc_y = self.linear_y
             acc_zout = self.linear_z / 1000 #EI KASUTA
 
-            #angular
-            #gyroskop_xout = self.read_word_2c(0x43)
-            #gyroskop_yout = self.read_word_2c(0x45)
-            #gyroskop_zout = self.read_word_2c(0x47)
+            delta_time = self.current_time - self.last_time
+            dvx = acc_x * delta_time
+            vx = vx + dvx
+            distance_x = vx * delta_time
+            distance = distance + distance_x
 
-            #acceleration
-            #accleration_xout = self.read_word_2c(0x3b)
-            #accleration_yout = self.read_word_2c(0x3d)
-            #accleration_zout = self.read_word_2c(0x3f)
+            #dth = gyro_zout * delta_time
+            #th = th + dth
+            #last_speed = speed
+            
+            print(acc_x,delta_time,vx)
+                                                                                                 #KIIRUSE ARVUTAMISE VALEMID
+                                                                                                   #speed = distance ÷ time. (speed = kiirendus * deltatime)
+                                                                                                    #distance = speed × time.
+                                                                                                    #time = distance ÷ speed.
 
-            accleration_xout_skaliert = acc_xout
-            accleration_yout_skaliert = acc_yout
-            accleration_zout_skaliert = acc_zout
-            current_time = rospy.Time.now()
 
-            vx = accleration_xout_skaliert 
-            vy = accleration_yout_skaliert
             vth = gyro_zout
-            dt = (current_time - last_time).to_sec()
-            delta_x = (vx * cos(th) - vy * sin(th)) * dt
-            delta_y = (vx * sin(th) + vy * cos(th)) * dt
-            delta_th = vth * dt
+            delta_x = (acc_x * cos(th) - acc_y * sin(th)) * delta_time
+            delta_y = (acc_x * sin(th) + acc_y * cos(th)) * delta_time
+            delta_th = vth * delta_time
 
+            
+            
             x += delta_x
             y += delta_y
             th += delta_th
@@ -106,7 +111,7 @@ class ImuCalibration(DTROS):
             odom_broadcaster.sendTransform(
                 (x, y, 0.),
                 odom_quat,
-                current_time,
+                self.current_time,
                 "base_link",
                 "odom"
             )
@@ -119,9 +124,12 @@ class ImuCalibration(DTROS):
 
             # set the velocity
             odom.child_frame_id = "base_link"
-            odom.twist.twist = Twist(Vector3(vx, vy, 0), Vector3(0, 0, vth))
+            odom.twist.twist = Twist(Vector3(acc_x, acc_y, 0), Vector3(0, 0, vth))
             pub.publish(odom)
-            last_time = current_time
+            
+            self.last_time = self.current_time
+        
+            #last_speed = last_speed + speed
 
 if __name__ == '__main__':
     # create the node
@@ -130,3 +138,17 @@ if __name__ == '__main__':
     node.run()
     # keep spinning
     rospy.spin()
+
+
+
+
+
+
+
+
+    #acc_x = kiirus
+    #accx = kiirendus
+    #dacc_x = kiiruse muutus
+    #dt = deltatime
+    #x = distants
+    #dx = distantsi muutus

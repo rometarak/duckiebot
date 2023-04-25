@@ -9,7 +9,7 @@ def around_box():
     speed.vel_right = 0.0
     speed.vel_left = 0.3
     pub.publish(speed)
-    time.sleep(1)
+    time.sleep(1.5)
     # Go straight for 0.15 meters
     speed.vel_right = 0.3
     speed.vel_left = 0.3
