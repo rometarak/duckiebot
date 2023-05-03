@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 import math
-
 import adafruit_mpu6050  # IMU Driver
 import board
 import rospy
 from duckietown.dtros import DTROS, NodeType, DTParam, ParamType
 from sensor_msgs.msg import Imu, Temperature
 from std_srvs.srv import Empty
-
-
-# TODO: calibration and loading custom config
+from my_package.src.imu_calibration import ImuCalibration
 
 class IMUNode(DTROS):
     def __init__(self):
@@ -86,7 +83,6 @@ class IMUNode(DTROS):
             self.pub.publish(msg)
             temp_msg.temperature = temp_data - self._temp_offset
             self.temp_pub.publish(temp_msg)
-
         except Exception as IMUCommLoss:
             self.logwarn(f"IMU Comm Loss: {IMUCommLoss}")
             pass

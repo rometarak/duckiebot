@@ -4,11 +4,11 @@ from sensor_msgs.msg import Imu
 from duckietown.dtros import DTROS, NodeType
 import rospy
 from nav_msgs.msg import Odometry
-import math
-from math import sin, cos, pi
+from math import sin, cos
 import tf 
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
 from smbus2 import SMBus
+import yaml
 
 class ImuCalibration(DTROS):
     def __init__(self, node_name):
@@ -25,8 +25,9 @@ class ImuCalibration(DTROS):
         self.linear_acceleration_y = 0.0
         self.linear_acceleration_z = 0.0
         self.i = 0
-        self.current_time = time.time()
-        self.last_time = 0
+        self.current_time = 0.0
+        self.last_time = 0.0
+        
         
         super(ImuCalibration, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
         rospy.Subscriber('/bestduckbot/imu_node/imu_data', Imu, self.imu_data)
@@ -49,7 +50,7 @@ class ImuCalibration(DTROS):
             self.angular_x += self.angular_velocity_x
             self.angular_y += self.angular_velocity_y
             self.angular_z += self.angular_velocity_z
-
+    
     def run(self):
         pub = rospy.Publisher('odom', Odometry, queue_size=10)
         odom_broadcaster = tf.TransformBroadcaster()
@@ -59,52 +60,40 @@ class ImuCalibration(DTROS):
         y = 0.0
         th = 0.0
         last_speed = 0.0
-        rate = rospy.Rate(10) # 10hz
+        delta_time = 0.0
 
+        rate = rospy.Rate(15) # 10hz
         while not rospy.is_shutdown():
             #print("---------------------------------------------------")
             #print("angular x keskmine on: ", self.angular_x/1000)
-            #rint("angular y keskmine on: ", self.angular_y/1000)
+            #print("angular y keskmine on: ", self.angular_y/1000)
             #print("angular z keskmine on: ", self.angular_z/1000)
             #print("LINEAR X KESKMINE ON: ", self.linear_x/1000)
             #print("LINEAR Y KESKMINE ON: ", self.linear_y/1000)
             #print("LINEAR Z KESKMINE ON: ", self.linear_z/1000)
-            gyro_xout = self.angular_x / 1000 #EI KASUTA
-            gyro_yout = self.angular_y #EI KASUTA
-            gyro_zout = self.angular_z
-
+            rospy.set_param("~ang_vel_offset", [self.angular_velocity_x/1000, self.angular_velocity_y/1000,self.angular_velocity_z/1000])
+            rospy.get_param("~accel_offset", [self.linear_acceleration_x/1000,self.linear_acceleration_y/1000,self.linear_acceleration_z/1000])
+            acc_y = round(self.linear_acceleration_y,1)
             acc_x = self.linear_acceleration_x
-            acc_y = self.linear_y
-            acc_zout = self.linear_z / 1000 #EI KASUTA
-
+            vel_z = self.angular_velocity_z
             delta_time = self.current_time - self.last_time
-            dvx = acc_x * delta_time
-            vx = vx + dvx
-            distance_x = vx * delta_time
-            distance = distance + distance_x
+            if delta_time < 1600000000.0 and delta_time != 0:
+                dvx = acc_y * delta_time
+                if dvx >= -0.2 and dvx <= 0.1:
+                    vx = 0
+                vx = round(vx + dvx,1)
+                distance_x = round(vx,1) * delta_time
+                dth = vel_z * delta_time
+                th = th + dth
+                distance = distance + (distance_x*cos(th))
 
-            #dth = gyro_zout * delta_time
-            #th = th + dth
-            #last_speed = speed
-            
-            print(acc_x,delta_time,vx)
+
+                print("kiirendus: ",acc_y,"\n","delta_time: ",delta_time,"\n","kiirus: ",vx)
+                print("th: ",th,"\n","dth: ",dth,"\n","distance_x: ",distance_x,"\n", "distance: ",distance)
                                                                                                  #KIIRUSE ARVUTAMISE VALEMID
                                                                                                    #speed = distance ÷ time. (speed = kiirendus * deltatime)
                                                                                                     #distance = speed × time.
                                                                                                     #time = distance ÷ speed.
-
-
-            vth = gyro_zout
-            delta_x = (acc_x * cos(th) - acc_y * sin(th)) * delta_time
-            delta_y = (acc_x * sin(th) + acc_y * cos(th)) * delta_time
-            delta_th = vth * delta_time
-
-            
-            
-            x += delta_x
-            y += delta_y
-            th += delta_th
-
             # since all odometry is 6DOF we'll need a quaternion created from yaw
             odom_quat = tf.transformations.quaternion_from_euler(0, 0, th)
             # first, we'll publish the transform over tf
@@ -120,17 +109,17 @@ class ImuCalibration(DTROS):
             odom.header.frame_id = "odom"
 
             # set the position
-            odom.pose.pose = Pose(Point(x, y, 0.), Quaternion(*odom_quat))
+            odom.pose.pose = Pose(Point(x,y,0), Quaternion(*odom_quat))
 
             # set the velocity
             odom.child_frame_id = "base_link"
-            odom.twist.twist = Twist(Vector3(acc_x, acc_y, 0), Vector3(0, 0, vth))
+            odom.twist.twist = Twist(Vector3(acc_x, vel_z, 0), Vector3(0, 0, vel_z))
             pub.publish(odom)
             
             self.last_time = self.current_time
-        
-            #last_speed = last_speed + speed
-
+            #vx = 0
+            rate.sleep()
+            
 if __name__ == '__main__':
     # create the node
     node = ImuCalibration(node_name='imucalibration')
