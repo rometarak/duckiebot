@@ -76,20 +76,34 @@ class ImuCalibration(DTROS):
             acc_y = round(self.linear_acceleration_y,1)
             acc_x = self.linear_acceleration_x
             vel_z = self.angular_velocity_z
+
             delta_time = self.current_time - self.last_time
+            dth = vel_z * delta_time
+            th = th + dth
+
+            #Y telg
             if delta_time < 1600000000.0 and delta_time != 0:
-                dvx = acc_y * delta_time
+                dvy = acc_y * delta_time
+                if dvy >= -0.2 and dvx <= 0.1:
+                    vy = 0
+                vy = round(vy + dvy,1)
+                distance_y = round(vy,2) * delta_time
+                distance_y = distance_y + (distance_y*cos(th))
+
+                #print("kiirendus: ",acc_y,"\n","delta_time: ",delta_time,"\n","kiirus: ",vx)
+                print("y distants ",distance)
+
+            #X telg
+            if delta_time < 1600000000.0 and delta_time != 0:
+                dvx = acc_x * delta_time
                 if dvx >= -0.2 and dvx <= 0.1:
                     vx = 0
                 vx = round(vx + dvx,1)
-                distance_x = round(vx,1) * delta_time
-                dth = vel_z * delta_time
-                th = th + dth
+                distance_x = round(vx,2) * delta_time
                 distance = distance + (distance_x*cos(th))
 
-
-                print("kiirendus: ",acc_y,"\n","delta_time: ",delta_time,"\n","kiirus: ",vx)
-                print("th: ",th,"\n","dth: ",dth,"\n","distance_x: ",distance_x,"\n", "distance: ",distance)
+                #print("kiirendus: ",acc_x,"\n","delta_time: ",delta_time,"\n","kiirus: ",vx)
+                print("x distants", distance)
                                                                                                  #KIIRUSE ARVUTAMISE VALEMID
                                                                                                    #speed = distance ÷ time. (speed = kiirendus * deltatime)
                                                                                                     #distance = speed × time.
