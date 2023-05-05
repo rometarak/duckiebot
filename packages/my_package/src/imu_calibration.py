@@ -7,8 +7,6 @@ from nav_msgs.msg import Odometry
 from math import sin, cos
 import tf 
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
-from smbus2 import SMBus
-import yaml
 
 class ImuCalibration(DTROS):
     def __init__(self, node_name):
@@ -50,20 +48,22 @@ class ImuCalibration(DTROS):
             self.angular_x += self.angular_velocity_x
             self.angular_y += self.angular_velocity_y
             self.angular_z += self.angular_velocity_z
-    
+        
     def run(self):
         pub = rospy.Publisher('odom', Odometry, queue_size=10)
         odom_broadcaster = tf.TransformBroadcaster()
-        vx = 0.0
+
         x = 0.0
-        distance = 0.0
+        distance_distance_y = 0.0
+        distance_distance_x = 0.0
         y = 0.0
         th = 0.0
-        last_speed = 0.0
         delta_time = 0.0
 
         rate = rospy.Rate(15) # 10hz
         while not rospy.is_shutdown():
+            rospy.set_param("~ang_vel_offset", [self.angular_velocity_x/1000, self.angular_velocity_y/1000,self.angular_velocity_z/1000])
+            rospy.get_param("~accel_offset", [self.linear_acceleration_x/1000,self.linear_acceleration_y/1000,self.linear_acceleration_z/1000])
             #print("---------------------------------------------------")
             #print("angular x keskmine on: ", self.angular_x/1000)
             #print("angular y keskmine on: ", self.angular_y/1000)
@@ -71,9 +71,7 @@ class ImuCalibration(DTROS):
             #print("LINEAR X KESKMINE ON: ", self.linear_x/1000)
             #print("LINEAR Y KESKMINE ON: ", self.linear_y/1000)
             #print("LINEAR Z KESKMINE ON: ", self.linear_z/1000)
-            rospy.set_param("~ang_vel_offset", [self.angular_velocity_x/1000, self.angular_velocity_y/1000,self.angular_velocity_z/1000])
-            rospy.get_param("~accel_offset", [self.linear_acceleration_x/1000,self.linear_acceleration_y/1000,self.linear_acceleration_z/1000])
-            acc_y = round(self.linear_acceleration_y,1)
+            acc_y = self.linear_acceleration_y
             acc_x = self.linear_acceleration_x
             vel_z = self.angular_velocity_z
 
@@ -84,14 +82,14 @@ class ImuCalibration(DTROS):
             #Y telg
             if delta_time < 1600000000.0 and delta_time != 0:
                 dvy = acc_y * delta_time
-                if dvy >= -0.2 and dvx <= 0.1:
+                if dvy >= -0.2 and dvy <= 0.1:
                     vy = 0
                 vy = round(vy + dvy,1)
                 distance_y = round(vy,2) * delta_time
-                distance_y = distance_y + (distance_y*cos(th))
+                distance_distance_y = distance_distance_y + (distance_y*cos(th))
 
                 #print("kiirendus: ",acc_y,"\n","delta_time: ",delta_time,"\n","kiirus: ",vx)
-                print("y distants ",distance)
+                print("y distants ",distance_distance_y)
 
             #X telg
             if delta_time < 1600000000.0 and delta_time != 0:
@@ -100,10 +98,10 @@ class ImuCalibration(DTROS):
                     vx = 0
                 vx = round(vx + dvx,1)
                 distance_x = round(vx,2) * delta_time
-                distance = distance + (distance_x*cos(th))
+                distance_distance_x = distance_distance_x + (distance_x*cos(th))
 
                 #print("kiirendus: ",acc_x,"\n","delta_time: ",delta_time,"\n","kiirus: ",vx)
-                print("x distants", distance)
+                print("x distants", distance_distance_x)
                                                                                                  #KIIRUSE ARVUTAMISE VALEMID
                                                                                                    #speed = distance ÷ time. (speed = kiirendus * deltatime)
                                                                                                     #distance = speed × time.
