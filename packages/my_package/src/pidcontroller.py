@@ -41,12 +41,12 @@ def pid_controller(t0,t1):
         e_der = (e - prev_e)/delta_t                            #derivative of the error
 
         # controller coefficients
-        Kp = rospy.get_param("/p")          #rosparam set /p 0
-        Ki = rospy.get_param("/i")          #rosparam set /i 0
-        Kd = rospy.get_param("/d")          #rosparam set /d 0
-        #Kp = 0.050
-        #Ki = 0.02 
-        #Kd = 1.2
+        #Kp = rospy.get_param("/p")          #rosparam set /p 0.068
+        #Ki = rospy.get_param("/i")          #rosparam set /i 0.029
+        #Kd = rospy.get_param("/d")          #rosparam set /d 0.27
+        Kp = 0.068
+        Ki = 0.029 
+        Kd = 0.27
         
         delta_t = t0-t1
         omega = Kp*e + Ki*e_int + Kd*e_der                 #PID controller for omega

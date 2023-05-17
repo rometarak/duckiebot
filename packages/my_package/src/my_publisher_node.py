@@ -6,6 +6,7 @@
 #import change_lane
 import pidcontroller
 import around_the_box
+import change_lane
 import os
 import numpy as np
 import rospy
@@ -60,54 +61,56 @@ class MyPublisherNode(DTROS):
         while not rospy.is_shutdown():
             bus = SMBus(1)
             #----------------------------------------------ODOMEETRIA--------------------------------------------------------
-            N_tot = 135                                         #total number of ticks per revolution
-            alpha = 2 * np.pi / N_tot                           #wheel rotation per tick in radians
+            #N_tot = 135                                         #total number of ticks per revolution
+            #alpha = 2 * np.pi / N_tot                           #wheel rotation per tick in radians
 
-            ticks_left = self.left_encoder
-            ticks_right = self.right_encoder
+            #ticks_left = self.left_encoder
+            #ticks_right = self.right_encoder
 
-            delta_ticks_left = ticks_left-prev_tick_left        # delta ticks of left wheel 
-            delta_ticks_right = ticks_right-prev_tick_right     # delta ticks of right wheel 
+            #delta_ticks_left = ticks_left-prev_tick_left        # delta ticks of left wheel 
+            #delta_ticks_right = ticks_right-prev_tick_right     # delta ticks of right wheel 
 
-            rotation_wheel_left = alpha * delta_ticks_left      # total rotation of left wheel 
-            rotation_wheel_right = alpha * delta_ticks_right    # total rotation of right wheel 
+            #rotation_wheel_left = alpha * delta_ticks_left      # total rotation of left wheel 
+            #rotation_wheel_right = alpha * delta_ticks_right    # total rotation of right wheel 
 
-            ticks_right = self.right_encoder
-            ticks_left = self.left_encoder
+            #ticks_right = self.right_encoder
+            #ticks_left = self.left_encoder
 
-            rotation_wheel_left = alpha * delta_ticks_left      #rotation_wheel_left = vasak ratas on kokku rotateerunud
-            rotation_wheel_right = alpha * delta_ticks_right    #rotation_wheel_right = parem ratas on kokku rotateerunud
+            #rotation_wheel_left = alpha * delta_ticks_left      #rotation_wheel_left = vasak ratas on kokku rotateerunud
+            #rotation_wheel_right = alpha * delta_ticks_right    #rotation_wheel_right = parem ratas on kokku rotateerunud
 
-            R = 0.0335                                          #Rataste raadius meetrites
-            d_left = R * rotation_wheel_left                    #d_left = Distants läbitud vasakul rattal
-            d_right = R * rotation_wheel_right                  #d_right = Distants läbitud paremal rattal
+            #R = 0.0335                                          #Rataste raadius meetrites
+            #d_left = R * rotation_wheel_left                    #d_left = Distants läbitud vasakul rattal
+            #d_right = R * rotation_wheel_right                  #d_right = Distants läbitud paremal rattal
          
-            d_A = (d_left + d_right)/2                          #d_A = Roboti läbitud tee
+            #d_A = (d_left + d_right)/2                          #d_A = Roboti läbitud tee
         
-            Delta_Theta = (d_right-d_left)/self.L               #Delta_Theta = Mitu kraadi robot keeranud on
+            #Delta_Theta = (d_right-d_left)/self.L               #Delta_Theta = Mitu kraadi robot keeranud on
 
             #90 kraadiste nurkade pööramise loogika
             flag = 0
             if pidcontroller.get_line_values() in self.turn_right:
-                speed.vel_left = 0.3
+                speed.vel_left = 0.4
                 speed.vel_right = 0
                 self.pub.publish(speed)
                 flag = 1
             if pidcontroller.get_line_values() in self.turn_left:
                 speed.vel_left = 0
-                speed.vel_right = 0.3
+                speed.vel_right = 0.4
                 self.pub.publish(speed)
                 flag = 0
             
             if pidcontroller.get_line_values() == [] and flag == 1:
-                speed.vel_left = 0.3
+                speed.vel_left = 0.4
                 speed.vel_right = 0
                 self.pub.publish(speed)
             if pidcontroller.get_line_values() == [] and flag == 0:
                 speed.vel_left = 0
-                speed.vel_right = 0.3
+                speed.vel_right = 0.4
                 self.pub.publish(speed)
-            
+            if pidcontroller.get_line_values() == []:
+                speed.vel_left = 0.3
+                speed.vel_right = 0.3
             t1 = time.time()
             #pidcontroller.pidcontroller() returnib omega
             speed.vel_left = self.v0 - pidcontroller.pid_controller(t0,t1)
@@ -118,8 +121,10 @@ class MyPublisherNode(DTROS):
                 around_the_box.around_box()
 
             #Lühema raja valimine
-            #change_lane.change_lane()
-            print(pidcontroller.get_line_values())
+            line_values = [[1,4],[1,2,4],[1,4,5],[1,2,4,5],[2,3,5,6],[2,3,6]]
+            if pidcontroller.get_line_values() in line_values:
+                change_lane.change_lane()
+        
             bus.close()
             self.pub.publish(speed)
             rate.sleep()
@@ -128,8 +133,8 @@ class MyPublisherNode(DTROS):
 
 if __name__ == '__main__':
     speed = WheelsCmdStamped()
-    x0 = y0 = 0 # meters
-    theta0 = 0 # radians
+    #x0 = y0 = 0 # meters
+    #theta0 = 0 # radians
     # create the node
     node = MyPublisherNode(node_name='my_publisher_node')
     # run node

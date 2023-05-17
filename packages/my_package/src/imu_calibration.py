@@ -59,11 +59,14 @@ class ImuCalibration(DTROS):
         y = 0.0
         th = 0.0
         delta_time = 0.0
+        vy = 0.0
+        
+        #rospy.set_param("~ang_vel_offset", [self.angular_velocity_x/1000, self.angular_velocity_y/1000,self.angular_velocity_z/1000])
+        #rospy.set_param("~accel_offset", [self.linear_acceleration_x/1000,self.linear_acceleration_y/1000,self.linear_acceleration_z/1000])
 
         rate = rospy.Rate(15) # 10hz
         while not rospy.is_shutdown():
-            rospy.set_param("~ang_vel_offset", [self.angular_velocity_x/1000, self.angular_velocity_y/1000,self.angular_velocity_z/1000])
-            rospy.get_param("~accel_offset", [self.linear_acceleration_x/1000,self.linear_acceleration_y/1000,self.linear_acceleration_z/1000])
+
             #print("---------------------------------------------------")
             #print("angular x keskmine on: ", self.angular_x/1000)
             #print("angular y keskmine on: ", self.angular_y/1000)
@@ -82,14 +85,15 @@ class ImuCalibration(DTROS):
             #Y telg
             if delta_time < 1600000000.0 and delta_time != 0:
                 dvy = acc_y * delta_time
-                if dvy >= -0.2 and dvy <= 0.1:
-                    vy = 0
-                vy = round(vy + dvy,1)
-                distance_y = round(vy,2) * delta_time
+                if acc_y >= -0.2 and acc_y <= 0.1:
+                    acc_y = 0
+                vy = vy + dvy
+                distance_y = vy * delta_time
                 distance_distance_y = distance_distance_y + (distance_y*cos(th))
 
-                #print("kiirendus: ",acc_y,"\n","delta_time: ",delta_time,"\n","kiirus: ",vx)
+                print("kiirendus: ",acc_y,"\n","delta_time: ",delta_time,"\n","kiirus: ",vy)
                 print("y distants ",distance_distance_y)
+                print("---------------------------------------------------------------------")
 
             #X telg
             if delta_time < 1600000000.0 and delta_time != 0:
@@ -100,14 +104,14 @@ class ImuCalibration(DTROS):
                 distance_x = round(vx,2) * delta_time
                 distance_distance_x = distance_distance_x + (distance_x*cos(th))
 
-                #print("kiirendus: ",acc_x,"\n","delta_time: ",delta_time,"\n","kiirus: ",vx)
+                print("kiirendus: ",acc_x,"\n","delta_time: ",delta_time,"\n","kiirus: ",vx)
                 print("x distants", distance_distance_x)
-                                                                                                 #KIIRUSE ARVUTAMISE VALEMID
-                                                                                                   #speed = distance ÷ time. (speed = kiirendus * deltatime)
+                                                                                                  #KIIRUSE ARVUTAMISE VALEMID
+            #print(acc_y, acc_x,vel_z)                                                                             #speed = distance ÷ time. (speed = kiirendus * deltatime)
                                                                                                     #distance = speed × time.
                                                                                                     #time = distance ÷ speed.
             # since all odometry is 6DOF we'll need a quaternion created from yaw
-            odom_quat = tf.transformations.quaternion_from_euler(0, 0, th)
+            odom_quat = tf.transformations.quaternion_from_euler(0, 0, 0)
             # first, we'll publish the transform over tf
             odom_broadcaster.sendTransform(
                 (x, y, 0.),
@@ -139,17 +143,3 @@ if __name__ == '__main__':
     node.run()
     # keep spinning
     rospy.spin()
-
-
-
-
-
-
-
-
-    #acc_x = kiirus
-    #accx = kiirendus
-    #dacc_x = kiiruse muutus
-    #dt = deltatime
-    #x = distants
-    #dx = distantsi muutus

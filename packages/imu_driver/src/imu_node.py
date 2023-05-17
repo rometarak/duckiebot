@@ -12,7 +12,7 @@ class IMUNode(DTROS):
     def __init__(self):
         # Node Init
         super(IMUNode, self).__init__(node_name="imu_node", node_type=NodeType.DRIVER)
-
+        self.i = 0
         # get ROS/Duckiebot parameters
         self._imu_device_id = rospy.get_param('~imu_device_id', 0x68)
         adafruit_mpu6050._MPU6050_DEVICE_ID = 0x68  # Overwrite Adafruit default device ID being wrong
@@ -43,14 +43,27 @@ class IMUNode(DTROS):
             exit(1)
 
         # ROS Pubsub initialization
+
         self.pub = rospy.Publisher('~imu_data', Imu, queue_size=10)
         self.temp_pub = rospy.Publisher('~temp_data', Temperature, queue_size=10)
         rospy.Service("~initialize_imu", Empty, self.zero_sensor)
         self.timer = rospy.Timer(rospy.Duration.from_sec(1.0 / polling_hz), self.publish_data)
 
+    
     def publish_data(self, event):
-        # Message Blank
         msg = Imu()
+        offset_y = 0
+        offset_x = 0
+        offset_z = 0
+        if msg.linear_acceleration.x!=0:
+            while self.i<=1000:
+                self.i+=1
+                offset_y += msg.linear_acceleration.x
+                offset_x += msg.linear_acceleration.y
+                offset_z += msg.linear_acceleration.z
+            self._accel_offset = [offset_x/1000 ,offset_y/1000 ,offset_z/1000]
+        #self.loginfo(self._accel_offset)
+        
         temp_msg = Temperature()
         # Poll Sensor
         try:

@@ -13,13 +13,13 @@ dt-launchfile-init
 # NOTE: Use `dt-exec COMMAND` to run the main process (blocking process)
 
 # launching app
-dt-exec roslaunch my_package robot_loc.launch
-#dt-exec rosrun my_package my_publisher_node.py
+#dt-exec roslaunch my_package robot_loc.launch
+dt-exec rosrun my_package my_publisher_node.py
 #dt-exec rosrun my_package my_subscriber_node.py
 
 #IMU
-dt-exec roslaunch imu_driver imu_node.launch veh:=$VEHICLE_NAME
-dt-exec rosrun my_package imu_calibration.py
+#dt-exec roslaunch imu_driver imu_node.launch veh:=$VEHICLE_NAME
+#dt-exec rosrun my_package imu_calibration.py
 
 # ----------------------------------------------------------------------------
 # YOUR CODE ABOVE THIS LINE
