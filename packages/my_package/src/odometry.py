@@ -1,7 +1,7 @@
 import numpy as np
 import rospy
 from duckietown_msgs.msg import WheelEncoderStamped
-
+#---------------THIS CLASS IS NOT USED---------------------------#
 class Odometry():
 
     def __init__(self):
@@ -45,3 +45,29 @@ class Odometry():
 
         return distance_traveled, delta_theta
 
+#----------------------------------------------ODOMEETRIA--------------------------------------------------------
+            #N_tot = 135                                         #total number of ticks per revolution
+            #alpha = 2 * np.pi / N_tot                           #wheel rotation per tick in radians
+
+            #ticks_left = self.left_encoder
+            #ticks_right = self.right_encoder
+
+            #delta_ticks_left = ticks_left-prev_tick_left        # delta ticks of left wheel 
+            #delta_ticks_right = ticks_right-prev_tick_right     # delta ticks of right wheel 
+
+            #rotation_wheel_left = alpha * delta_ticks_left      # total rotation of left wheel 
+            #rotation_wheel_right = alpha * delta_ticks_right    # total rotation of right wheel 
+
+            #ticks_right = self.right_encoder
+            #ticks_left = self.left_encoder
+
+            #rotation_wheel_left = alpha * delta_ticks_left      #rotation_wheel_left = vasak ratas on kokku rotateerunud
+            #rotation_wheel_right = alpha * delta_ticks_right    #rotation_wheel_right = parem ratas on kokku rotateerunud
+
+            #R = 0.0335                                          #Rataste raadius meetrites
+            #d_left = R * rotation_wheel_left                    #d_left = Distants läbitud vasakul rattal
+            #d_right = R * rotation_wheel_right                  #d_right = Distants läbitud paremal rattal
+         
+            #d_A = (d_left + d_right)/2                          #d_A = Roboti läbitud tee
+        
+            #Delta_Theta = (d_right-d_left)/self.L               #Delta_Theta = Mitu kraadi robot keeranud on

@@ -1,7 +1,5 @@
 import time
 import rospy
-from smbus2 import SMBus
-import pidcontroller
 from duckietown_msgs.msg import WheelsCmdStamped
 pub = rospy.Publisher('bestduckbot/wheels_driver_node/wheels_cmd', WheelsCmdStamped, queue_size=10)
 speed = WheelsCmdStamped()
@@ -14,4 +12,3 @@ def change_lane():
         speed.vel_right = 0.5
         pub.publish(speed)
         time.sleep(0.8)
-   
