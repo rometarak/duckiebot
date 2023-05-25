@@ -54,6 +54,7 @@ class MyPublisherNode(DTROS):
 
         #prev_tick_left = self.left_encoder
         #prev_tick_right = self.right_encoder
+        counter = 0
         flag = 0
         rate = rospy.Rate(25) # 25Hz
         while not rospy.is_shutdown():
@@ -64,48 +65,52 @@ class MyPublisherNode(DTROS):
             turn_right = [[5,6,7,8],[4,5,6,7,8],[3,4,5,6,7,8]]
             
             if pidcontroller.get_line_values() in turn_right:
-                print("turning right!")
                 speed.vel_left = 0.4
                 speed.vel_right = 0
                 self.pub.publish(speed)
                 flag = 1
 
             if pidcontroller.get_line_values() in turn_left:
-                print("turning left!")
                 speed.vel_left = 0
                 speed.vel_right = 0.4
                 self.pub.publish(speed)
                 flag = 0
             
             while pidcontroller.get_line_values() == [] and flag == 1:
-                print("turning right!")
                 speed.vel_left = 0.4
                 speed.vel_right = 0
                 self.pub.publish(speed)
                 
             while pidcontroller.get_line_values() == [] and flag == 0:
-                print("turning left!")
                 speed.vel_left = 0
                 speed.vel_right = 0.4
                 self.pub.publish(speed)
-            
+        
+
             t1 = time.time()
             #pidcontroller.pidcontroller() returnib omega
             speed.vel_left = self.v0 - pidcontroller.pid_controller(t0,t1)
             speed.vel_right = self.v0 + pidcontroller.pid_controller(t0,t1)
-            
+
+            #Kutsun välja objektist möödumise funktsiooni
+
             if self.distance < 0.25:
-                #Kutsun välja kastist mööda minemise funktsiooni
                 around_the_box.around_box()
 
             #Lühema raja valimine
             line_values = [[1,4],[1,2,4],[1,4,5],[1,2,4,5],[2,3,5,6],[2,3,6]]
             if pidcontroller.get_line_values() in line_values:
                 change_lane.change_lane()
-        
+            
+            if counter >= 50:
+                counter = 0
+                flag = 2
+
+            counter += 1
             bus.close()
             self.pub.publish(speed)
             rate.sleep()
+
 
             
 
