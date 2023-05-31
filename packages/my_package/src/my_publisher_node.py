@@ -93,7 +93,6 @@ class MyPublisherNode(DTROS):
             speed.vel_right = self.v0 + pidcontroller.pid_controller(t0,t1)
 
             #Kutsun välja objektist möödumise funktsiooni
-
             if self.distance < 0.25:
                 around_the_box.around_box()
 
@@ -110,9 +109,6 @@ class MyPublisherNode(DTROS):
             bus.close()
             self.pub.publish(speed)
             rate.sleep()
-
-
-            
 
 if __name__ == '__main__':
     speed = WheelsCmdStamped()
