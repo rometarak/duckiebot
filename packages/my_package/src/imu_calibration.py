@@ -61,8 +61,8 @@ class ImuCalibration(DTROS):
         delta_time = 0.0
         vy = 0.0
         
-        #rospy.set_param("~ang_vel_offset", [self.angular_velocity_x/1000, self.angular_velocity_y/1000,self.angular_velocity_z/1000])
-        #rospy.set_param("~accel_offset", [self.linear_acceleration_x/1000,self.linear_acceleration_y/1000,self.linear_acceleration_z/1000])
+        rospy.set_param("~ang_vel_offset", [self.angular_velocity_x/1000, self.angular_velocity_y/1000,self.angular_velocity_z/1000])
+        rospy.set_param("~accel_offset", [self.linear_acceleration_x/1000,self.linear_acceleration_y/1000,self.linear_acceleration_z/1000])
 
         rate = rospy.Rate(15) # 10hz
         while not rospy.is_shutdown():
@@ -91,7 +91,7 @@ class ImuCalibration(DTROS):
                 distance_y = vy * delta_time
                 distance_distance_y = distance_distance_y + (distance_y*cos(th))
 
-                print("kiirendus: ",acc_y,"\n","delta_time: ",delta_time,"\n","kiirus: ",vy)
+                print("y kiirendus: ",acc_y,"\n","delta_time: ",delta_time,"\n","y kiirus: ",vy)
                 print("y distants ",distance_distance_y)
                 print("---------------------------------------------------------------------")
 
@@ -104,7 +104,7 @@ class ImuCalibration(DTROS):
                 distance_x = round(vx,2) * delta_time
                 distance_distance_x = distance_distance_x + (distance_x*cos(th))
 
-                print("kiirendus: ",acc_x,"\n","delta_time: ",delta_time,"\n","kiirus: ",vx)
+                print("x kiirendus: ",acc_x,"\n","delta_time: ",delta_time,"\n","x kiirus: ",vx)
                 print("x distants", distance_distance_x)
                                                                                                   #KIIRUSE ARVUTAMISE VALEMID
             #print(acc_y, acc_x,vel_z)                                                                             #speed = distance ÷ time. (speed = kiirendus * deltatime)
