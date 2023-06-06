@@ -28,10 +28,10 @@ def get_theta():
     return theta_hat
 
 def pid_controller(t0,t1):
-        prev_int = 0
+        delta_t = 1
         pose_estimation = 4.5
-        delta_t = t0-t1
-
+        prev_int = 0
+ 
         e = pose_estimation - get_theta()
         e_int = prev_int + e*delta_t
         prev_int = e_int                                        #integral of the error
@@ -44,9 +44,10 @@ def pid_controller(t0,t1):
         #Ki = rospy.get_param("/i")          #rosparam set /i 0.029
         #Kd = rospy.get_param("/d")          #rosparam set /d 0.27
         Kp = 0.068
-        Ki = 0.029
+        Ki = 0.029 
         Kd = 0.27
-            
-            
+        
+        delta_t = t0-t1
         omega = Kp*e + Ki*e_int + Kd*e_der                 #PID controller for omega
+        
         return omega

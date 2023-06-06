@@ -48,13 +48,14 @@ class MyPublisherNode(DTROS):
         self.right_encoder = data.data
     
     def run(self):
+        t0 = time.time()
+
         counter = 0
         flag = 0
-        t1 = 0
         rate = rospy.Rate(25) # 25Hz
         while not rospy.is_shutdown():
             bus = SMBus(1)
-        
+
             #90 kraadiste nurkade pööramise loogika
             turn_left = [[1,2,3,4],[1,2,3,4,5],[1,2,3,4,5,6]]
             turn_right = [[5,6,7,8],[4,5,6,7,8],[3,4,5,6,7,8]]
@@ -82,7 +83,7 @@ class MyPublisherNode(DTROS):
                 self.pub.publish(speed)
         
 
-            t0 = time.time()
+            t1 = time.time()
             #pidcontroller.pidcontroller() returnib omega
             speed.vel_left = self.v0 - pidcontroller.pid_controller(t0,t1)
             speed.vel_right = self.v0 + pidcontroller.pid_controller(t0,t1)
@@ -99,7 +100,7 @@ class MyPublisherNode(DTROS):
             if counter >= 50:
                 counter = 0
                 flag = 2
-            t1 = t0
+
             counter += 1
             bus.close()
             self.pub.publish(speed)
