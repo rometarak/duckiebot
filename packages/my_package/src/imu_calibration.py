@@ -66,14 +66,6 @@ class ImuCalibration(DTROS):
 
         rate = rospy.Rate(15) # 10hz
         while not rospy.is_shutdown():
-
-            #print("---------------------------------------------------")
-            #print("angular x keskmine on: ", self.angular_x/1000)
-            #print("angular y keskmine on: ", self.angular_y/1000)
-            #print("angular z keskmine on: ", self.angular_z/1000)
-            #print("LINEAR X KESKMINE ON: ", self.linear_x/1000)
-            #print("LINEAR Y KESKMINE ON: ", self.linear_y/1000)
-            #print("LINEAR Z KESKMINE ON: ", self.linear_z/1000)
             acc_y = self.linear_acceleration_y
             acc_x = self.linear_acceleration_x
             vel_z = self.angular_velocity_z

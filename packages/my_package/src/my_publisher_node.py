@@ -97,7 +97,7 @@ class MyPublisherNode(DTROS):
             if pidcontroller.get_line_values() in line_values:
                 change_lane.change_lane()
             
-            if counter >= 50:
+            if counter >= 30:
                 counter = 0
                 flag = 2
 
