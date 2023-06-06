@@ -13,7 +13,6 @@ dt-launchfile-init
 # NOTE: Use `dt-exec COMMAND` to run the main process (blocking process)
 
 # launching app
-#dt-exec roslaunch my_package robot_loc.launch
 dt-exec rosrun my_package my_publisher_node.py
 #dt-exec rosrun my_package my_subscriber_node.py
 

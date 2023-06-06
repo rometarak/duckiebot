@@ -1,6 +1,7 @@
 import numpy as np
 import rospy
 from duckietown_msgs.msg import WheelEncoderStamped
+
 #---------------THIS CLASS IS NOT USED---------------------------#
 class Odometry():
 
